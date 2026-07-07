@@ -1,5 +1,6 @@
 import math
 import random
+from other import flatten
 #math core
 class MathENG1:
     @staticmethod
@@ -50,65 +51,127 @@ class MathENG1:
     def mse_loss(output, target):
         return sum((o - t)**2 for o, t in zip(output, target)) / len(output)
     
-#ai core
+#neoron
 class Neuron:
     def __init__(self, inputs,activition='gelu'):
         self.i=inputs
         self.a=activition
-        self.multiplier=random.uniform(-0.5,0.5)
+
+        self.multiplier=[]
+        for i in range(self.i):
+            self.multiplier.append(random.uniform(-0.5, 0.5))
+        
         self.addition=0
 
     def forward(self,inputs):
+        if len(self.multiplier) != len(inputs):
+            print("INPUTS ERROR")
+            return
         lens = len(inputs)
         if self.a == 'gelu':
-            out=[]
-            for i in range(lens):
-                inp=inputs[i]
-                out.append(MathENG1.gelu(inp * self.multiplier + self.addition))
-            return out
+            total = 0
+
+            for i in range(len(inputs)):
+                total += inputs[i] * self.multiplier[i]
+
+            return MathENG1.gelu(total + self.addition)
         elif self.a == 'relu':
-            out=[]
-            for i in range(lens):
-                inp=inputs[i]
-                out.append(MathENG1.relu(inp * self.multiplier + self.addition))
-            return out
+            total = 0
+
+            for i in range(len(inputs)):
+                total += inputs[i] * self.multiplier[i]
+
+            return MathENG1.relu(total + self.addition)
         elif self.a == 'sigmoid':
-            out=[]
-            for i in range(lens):
-                inp=inputs[i]
-                out.append(MathENG1.sigmoid(inp * self.multiplier + self.addition))
-            return out
+            total = 0
+
+            for i in range(len(inputs)):
+                total += inputs[i] * self.multiplier[i]
+
+            return MathENG1.sigmoid(total + self.addition)
         else:
             print("SYNTEX EROR")
-            return 
-    
-    def train(self,inputs,output,learning_rate):
-        otput_now = self.forward(inputs)
-
-        for i in range(len(output)):
-            eror = output[i] - otput_now[i]
-
-            self.multiplier += eror * learning_rate
-            self.addition += eror * learning_rate
+            return
         
-        
+    def train(self, inputs, output, learning_rate):
+        if len(self.multiplier) != len(inputs):
+            print("INPUTS ERROR")
+            return
 
+        output_now = self.forward(inputs)
+
+        error = output - output_now
+
+        for i in range(len(inputs)):
+            self.multiplier[i] += error * inputs[i] * learning_rate
+
+        self.addition += error * learning_rate
+        
+     
+#layer
 class Layer:
-    def __init__(self, input_size, neuron_count):
+    def __init__(self, input_size, neuron_count,activation='gelu'):
         self.si=input_size
         self.nc=neuron_count
 
-    def forward(self):
-        pass
+        self.neurons=[]
+        for i in range(neuron_count):
+            self.neurons.append(Neuron(input_size,activation))
 
+    def forward(self,inputs):
+        answer = []
+        
+        for neurons in self.neurons:
+            answer.append(neurons.forward(inputs))
 
+        return answer
+    
+    def train(self, inputs, output, learning_rate):
+        for i in range(len(self.neurons)):
+            self.neurons[i].train(
+                inputs,
+                output[i],
+                learning_rate
+            )
+
+#network
 class Network:
-    def __init__(self,neoron_inputs,layers,neoron_on_layers,output_neoron,activation='gelu'):
-        self.ni=neoron_inputs
-        self.l=layers
-        self.nol=neoron_on_layers
-        self.on=output_neoron
-        self.ac=activation
+    def __init__(self, neoron_inputs, layers, neoron_on_layers, output_neoron, activation='gelu'):
+        self.ni = Layer(neoron_inputs, neoron_on_layers, activation)
 
-    def forward(self):
-        pass
+        self.layers=[]
+        self.layers.append(Layer(neoron_on_layers, neoron_on_layers, activation))
+
+        for i in range(layers - 1):
+            self.layers.append(
+                Layer(neoron_on_layers, neoron_on_layers, activation)
+            )
+
+        self.on = Layer(neoron_on_layers, output_neoron, activation)
+
+    def forward(self,inputs):
+        output = self.ni.forward(inputs)
+
+        for layer in self.layers:
+            output = layer.forward(output)
+
+        output = self.on.forward(output)
+
+        return output
+    
+    def train(self, inputs, output, learning_rate):
+        data = self.ni.forward(inputs)
+
+        layer_outputs = []
+
+        for layer in self.layers:
+            data = layer.forward(data)
+            layer_outputs.append(data)
+
+        final_output = self.on.forward(data)
+
+        self.on.train(
+            data,
+            output,
+            learning_rate
+        )
