@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Eyes-Network"
-version = "0.0.3"
+version = "0.0.4"
 description = "A Python library for creating neural networks and tokenizers"
 readme = "README.md"
 requires-python = ">=3.10"
