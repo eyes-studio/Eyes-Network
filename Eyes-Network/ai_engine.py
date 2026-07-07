@@ -180,16 +180,34 @@ class Network:
     def train(self, inputs, output, learning_rate):
         data = self.ni.forward(inputs)
 
+        layer_inputs = []
         layer_outputs = []
+
+        layer_inputs.append(data)
 
         for layer in self.layers:
             data = layer.forward(data)
             layer_outputs.append(data)
+            layer_inputs.append(data)
 
         final_output = self.on.forward(data)
 
         self.on.train(
-            data,
+            layer_inputs[-1],
             output,
             learning_rate
         )
+
+        error = []
+
+        for i in range(len(output)):
+            error.append(output[i] - final_output[i])
+
+        for i in range(len(self.layers)-1, -1, -1):
+            layer = self.layers[i]
+
+            layer.train(
+                layer_inputs[i],
+                error,
+                learning_rate
+            )
