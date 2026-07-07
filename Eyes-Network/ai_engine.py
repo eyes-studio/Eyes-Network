@@ -92,7 +92,7 @@ class Neuron:
         else:
             print("SYNTEX EROR")
             return
-            
+        
     def train(self, inputs, output, learning_rate):
         if len(self.multiplier) != len(inputs):
             print("INPUTS ERROR")
@@ -117,13 +117,6 @@ class Neuron:
             self.multiplier[i] += gradient * inputs[i] * learning_rate
 
         self.addition += gradient * learning_rate
-        output_now = self.forward(inputs)
-        
-        error = output - output_now
-
-        for i in range(len(inputs)):
-            self.multiplier[i] += error * inputs[i] * learning_rate
-        self.addition += error * learning_rate
         
      
 #layer
@@ -148,7 +141,7 @@ class Layer:
         for i in range(len(self.neurons)):
             self.neurons[i].train(
                 inputs,
-                output[i],
+                output[i % len(output)],
                 learning_rate
             )
 
