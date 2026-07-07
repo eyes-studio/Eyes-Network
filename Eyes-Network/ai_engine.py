@@ -92,7 +92,7 @@ class Neuron:
         else:
             print("SYNTEX EROR")
             return
-        
+            
     def train(self, inputs, output, learning_rate):
         if len(self.multiplier) != len(inputs):
             print("INPUTS ERROR")
@@ -102,9 +102,27 @@ class Neuron:
 
         error = output - output_now
 
+        if self.a == "gelu":
+            derivative = MathENG1.gelu_derivative(output_now)
+        elif self.a == "relu":
+            derivative = MathENG1.relu_derivative(output_now)
+        elif self.a == "sigmoid":
+            derivative = MathENG1.sigmoid_derivative(output_now)
+        else:
+            derivative = 1
+
+        gradient = error * derivative
+
+        for i in range(len(inputs)):
+            self.multiplier[i] += gradient * inputs[i] * learning_rate
+
+        self.addition += gradient * learning_rate
+        output_now = self.forward(inputs)
+        
+        error = output - output_now
+
         for i in range(len(inputs)):
             self.multiplier[i] += error * inputs[i] * learning_rate
-
         self.addition += error * learning_rate
         
      
